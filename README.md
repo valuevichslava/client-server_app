@@ -29,6 +29,11 @@ make run-server2
 ```bash
 make run-client
 ```
+4. Use client in the container:
+
+```bash
+docker exec -it nclient /bin/bash
+```
 
 ## Technologies Used
 
