@@ -4,10 +4,11 @@
 #include <sys/socket.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <netdb.h>  // For gethostbyname()
 
-#define SERVER1_IP "10.89.0.2"
+#define SERVER1_IP "nserver1"
 #define SERVER1_PORT 5001
-#define SERVER2_IP "10.89.0.3"
+#define SERVER2_IP "nserver2"
 #define SERVER2_PORT 5002
 
 void print_menu() {
@@ -37,7 +38,8 @@ int main(int argc, char const *argv[]) {
     struct sockaddr_in server;
     char message[1024], server_reply[1024];
     int option = 0;
-    char* server_ip;
+    struct hostent *he;
+    struct in_addr **addr_list;
     int server_port;
 
     while (1) {
@@ -46,11 +48,11 @@ int main(int argc, char const *argv[]) {
 
         switch (option) {
             case 1:
-                server_ip = SERVER1_IP;
+                he = gethostbyname(SERVER1_IP);
                 server_port = SERVER1_PORT;
                 break;
             case 2:
-                server_ip = SERVER2_IP;
+                he = gethostbyname(SERVER2_IP);
                 server_port = SERVER2_PORT;
                 break;
             case 3:
@@ -60,6 +62,13 @@ int main(int argc, char const *argv[]) {
                 continue;
         }
 
+        if (he == NULL) {
+            herror("gethostbyname");
+            return 1;
+        }
+
+        addr_list = (struct in_addr **)he->h_addr_list;
+
         // Создаем сокет
         socket_desc = socket(AF_INET, SOCK_STREAM, 0);
         if (socket_desc == -1) {
@@ -68,7 +77,7 @@ int main(int argc, char const *argv[]) {
         }
 
         // Настраиваем структуру адреса сервера
-        server.sin_addr.s_addr = inet_addr(server_ip);
+        server.sin_addr = *addr_list[0];
         server.sin_family = AF_INET;
         server.sin_port = htons(server_port);
 
